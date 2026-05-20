@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}SportZone{% endblock %} — SportZone</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <div class="flash-container" id="flashContainer">
+    {% for cat, msg in messages %}
+    <div class="flash flash-{{ cat }}">{{ msg }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+{% endwith %}
+
+<!-- Navbar -->
+<nav class="navbar">
+  <a href="{{ url_for('index') }}" class="nav-brand">
+    <div class="logo-mark">⚡</div>
+    Sport<span>Zone</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="{{ url_for('index') }}" {% if request.endpoint=='index' %}class="active"{% endif %}>หน้าแรก</a></li>
+    <li><a href="{{ url_for('products') }}" {% if request.endpoint=='products' %}class="active"{% endif %}>สินค้า</a></li>
+    <li><a href="{{ url_for('admin') }}" {% if request.endpoint=='admin' %}class="active"{% endif %}>Admin</a></li>
+  </ul>
+  <a href="{{ url_for('cart') }}" class="nav-cart">
+    🛒 ตะกร้า
+    <span class="cart-badge" id="cartBadge">{{ cart_count }}</span>
+  </a>
+</nav>
+
+{% block content %}{% endblock %}
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="footer-brand">Sport<span>Zone</span></div>
+  <p>อุปกรณ์กีฬาคุณภาพสูง สำหรับนักกีฬาทุกระดับ</p>
+</footer>
+
+<script>
+// Auto-hide flash messages
+setTimeout(() => {
+  const fc = document.getElementById('flashContainer');
+  if (fc) fc.style.opacity = '0', fc.style.transition = '0.5s', setTimeout(() => fc.remove(), 500);
+}, 3000);
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

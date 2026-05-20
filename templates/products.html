@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+{% block title %}สินค้าทั้งหมด{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div class="page-header-inner">
+    <div class="breadcrumb">
+      <a href="{{ url_for('index') }}">หน้าแรก</a>
+      <span class="sep">/</span>
+      <span>สินค้าทั้งหมด</span>
+    </div>
+    <h1 class="page-title">สินค้าทั้งหมด</h1>
+  </div>
+</div>
+
+<section class="section">
+  <div class="section-inner">
+
+    <!-- Search & Filter -->
+    <form method="GET" action="{{ url_for('products') }}">
+      <div class="search-bar">
+        <div class="search-input-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" name="search" placeholder="ค้นหาสินค้า..." value="{{ search }}">
+        </div>
+        <select name="category" class="filter-select">
+          <option value="">ทุกหมวดหมู่</option>
+          {% for cat in categories %}
+          <option value="{{ cat.category_id }}" {% if category == cat.category_id|string %}selected{% endif %}>
+            {{ cat.icon }} {{ cat.category_name }}
+          </option>
+          {% endfor %}
+        </select>
+        <select name="sort" class="filter-select">
+          <option value="name" {% if sort=='name' %}selected{% endif %}>เรียงตามชื่อ</option>
+          <option value="price_asc" {% if sort=='price_asc' %}selected{% endif %}>ราคา: ต่ำ → สูง</option>
+          <option value="price_desc" {% if sort=='price_desc' %}selected{% endif %}>ราคา: สูง → ต่ำ</option>
+        </select>
+        <button type="submit" class="btn btn-primary">ค้นหา</button>
+        {% if search or category %}
+        <a href="{{ url_for('products') }}" class="btn btn-outline">✕ ล้างตัวกรอง</a>
+        {% endif %}
+      </div>
+    </form>
+
+    <!-- Result Count -->
+    <div style="color:var(--gray);font-size:0.88rem;margin-bottom:1.5rem">
+      พบ <strong style="color:var(--white)">{{ products|length }}</strong> รายการ
+      {% if search %} สำหรับ "<strong style="color:var(--green)">{{ search }}</strong>"{% endif %}
+    </div>
+
+    <!-- Category Quick Filter -->
+    <div style="display:flex;gap:0.6rem;flex-wrap:wrap;margin-bottom:2rem">
+      <a href="{{ url_for('products', search=search, sort=sort) }}"
+         class="cat-card {% if not category %}active{% endif %}"
+         style="padding:0.6rem 1rem;border-radius:100px;flex-direction:row;display:inline-flex;gap:6px;align-items:center">
+        <span style="font-size:1rem">🏅</span> ทั้งหมด
+      </a>
+      {% for cat in categories %}
+      <a href="{{ url_for('products', category=cat.category_id, search=search, sort=sort) }}"
+         class="cat-card {% if category == cat.category_id|string %}active{% endif %}"
+         style="padding:0.6rem 1rem;border-radius:100px;flex-direction:row;display:inline-flex;gap:6px;align-items:center">
+        <span style="font-size:1rem">{{ cat.icon }}</span> {{ cat.category_name }}
+      </a>
+      {% endfor %}
+    </div>
+
+    <!-- Products Grid -->
+    {% if products %}
+    <div class="products-grid">
+      {% for p in products %}
+      <div class="product-card" onclick="location.href='{{ url_for('product_detail', pid=p.product_id) }}'">
+        <div class="product-img">
+          {% if p.image_url %}
+          <img src="{{ p.image_url }}" alt="{{ p.product_name }}" loading="lazy">
+          {% else %}
+          <div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:4rem;">{{ p.icon }}</div>
+          {% endif %}
+          {% if p.is_featured %}
+          <span class="product-badge featured">⭐ แนะนำ</span>
+          {% endif %}
+          {% if p.stock == 0 %}
+          <span class="product-badge" style="background:#333;color:#777">หมด</span>
+          {% endif %}
+        </div>
+        <div class="product-info">
+          <div class="product-cat">{{ p.icon }} {{ p.category_name }}</div>
+          <div class="product-name">{{ p.product_name }}</div>
+          {% if p.description %}
+          <div style="color:var(--gray);font-size:0.82rem;margin-bottom:0.8rem;line-height:1.5;flex:1">
+            {{ p.description[:60] }}{% if p.description|length > 60 %}...{% endif %}
+          </div>
+          {% endif %}
+          <div class="product-price">
+            <span class="price-main">฿{{ '{:,.0f}'.format(p.price) }}</span>
+            {% if p.original_price and p.original_price > p.price %}
+            <span class="price-orig">฿{{ '{:,.0f}'.format(p.original_price) }}</span>
+            {% endif %}
+          </div>
+          <div class="product-footer">
+            {% if p.stock > 0 %}
+            <form method="POST" action="{{ url_for('cart_add', pid=p.product_id) }}" onclick="event.stopPropagation()">
+              <input type="hidden" name="quantity" value="1">
+              <button type="submit" class="btn btn-primary btn-sm">🛒 เพิ่มตะกร้า</button>
+            </form>
+            {% else %}
+            <span class="btn btn-outline btn-sm" style="cursor:default;opacity:0.5">สินค้าหมด</span>
+            {% endif %}
+            <span class="stock-badge">เหลือ {{ p.stock }}</span>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="icon">🔍</div>
+      <h3>ไม่พบสินค้า</h3>
+      <p>ลองเปลี่ยนคำค้นหาหรือตัวกรองใหม่</p>
+      <a href="{{ url_for('products') }}" class="btn btn-primary">ดูสินค้าทั้งหมด</a>
+    </div>
+    {% endif %}
+
+  </div>
+</section>
+
+{% endblock %}

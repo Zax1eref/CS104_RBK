@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% block title %}ตะกร้าสินค้า{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div class="page-header-inner">
+    <div class="breadcrumb">
+      <a href="{{ url_for('index') }}">หน้าแรก</a>
+      <span class="sep">/</span>
+      <span>ตะกร้าสินค้า</span>
+    </div>
+    <h1 class="page-title">🛒 ตะกร้าสินค้า</h1>
+  </div>
+</div>
+
+<section class="section">
+  <div class="section-inner">
+    {% if cart_items %}
+    <div class="cart-layout">
+
+      <!-- Items -->
+      <div>
+        <div style="color:var(--gray);font-size:0.88rem;margin-bottom:1.5rem">
+          {{ cart_items|length }} รายการในตะกร้า
+        </div>
+
+        {% for item in cart_items %}
+        <div class="cart-item">
+          <div class="cart-item-img">
+            {% if item.image_url %}
+            <img src="{{ item.image_url }}" alt="{{ item.product_name }}">
+            {% else %}
+            <div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:2rem;">🏅</div>
+            {% endif %}
+          </div>
+          <div>
+            <a href="{{ url_for('product_detail', pid=item.product_id) }}">
+              <div class="cart-item-name">{{ item.product_name }}</div>
+            </a>
+            <div class="cart-item-price">฿{{ '{:,.0f}'.format(item.price) }} / ชิ้น</div>
+            <div style="margin-top:0.7rem">
+              <form method="POST" action="{{ url_for('cart_update', cart_id=item.cart_id) }}" style="display:inline-flex;align-items:center;gap:8px">
+                <div class="qty-control" style="border-radius:6px">
+                  <button type="button" class="qty-btn" style="width:32px;height:32px;font-size:1rem"
+                    onclick="this.form.quantity.value=Math.max(1,parseInt(this.form.quantity.value)-1)">−</button>
+                  <input type="number" name="quantity" value="{{ item.quantity }}" min="1" max="{{ item.stock }}"
+                    class="qty-input" style="width:44px;height:32px;font-size:0.9rem">
+                  <button type="button" class="qty-btn" style="width:32px;height:32px;font-size:1rem"
+                    onclick="this.form.quantity.value=Math.min({{ item.stock }},parseInt(this.form.quantity.value)+1)">+</button>
+                </div>
+                <button type="submit" class="btn btn-ghost btn-sm">อัปเดต</button>
+              </form>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.3rem;font-weight:900;color:var(--green);margin-bottom:8px">
+              ฿{{ '{:,.0f}'.format(item.price * item.quantity) }}
+            </div>
+            <a href="{{ url_for('cart_remove', cart_id=item.cart_id) }}" class="btn btn-ghost btn-sm" style="color:var(--red2)">✕ ลบ</a>
+          </div>
+        </div>
+        {% endfor %}
+
+        <div style="margin-top:1.5rem">
+          <a href="{{ url_for('products') }}" class="btn btn-outline">← ซื้อสินค้าเพิ่ม</a>
+        </div>
+      </div>
+
+      <!-- Summary -->
+      <div>
+        <div class="cart-summary">
+          <div class="summary-title">สรุปคำสั่งซื้อ</div>
+          <div class="summary-row">
+            <span>ราคาสินค้า</span>
+            <span>฿{{ '{:,.0f}'.format(total) }}</span>
+          </div>
+          <div class="summary-row">
+            <span>ค่าจัดส่ง</span>
+            <span class="text-green">ฟรี 🎉</span>
+          </div>
+          <div class="summary-total">
+            <span>ยอดรวม</span>
+            <span class="total-price">฿{{ '{:,.0f}'.format(total) }}</span>
+          </div>
+          <a href="{{ url_for('checkout') }}" class="btn btn-primary w-full mt-2" style="justify-content:center">
+            💳 ดำเนินการชำระเงิน
+          </a>
+          <div style="margin-top:1rem;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+            <span style="font-size:0.78rem;color:var(--gray)">🔒 ชำระเงินปลอดภัย</span>
+            <span style="font-size:0.78rem;color:var(--gray)">🚚 ส่งฟรีทั่วประเทศ</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% else %}
+    <div class="empty-state">
+      <div class="icon">🛒</div>
+      <h3>ตะกร้าของคุณว่างเปล่า</h3>
+      <p>เพิ่มสินค้าที่ต้องการลงในตะกร้าก่อนนะครับ</p>
+      <a href="{{ url_for('products') }}" class="btn btn-primary">เลือกซื้อสินค้า</a>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+{% endblock %}

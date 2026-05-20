@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% block title %}{{ product.product_name }}{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div class="page-header-inner">
+    <div class="breadcrumb">
+      <a href="{{ url_for('index') }}">หน้าแรก</a>
+      <span class="sep">/</span>
+      <a href="{{ url_for('products') }}">สินค้า</a>
+      <span class="sep">/</span>
+      <a href="{{ url_for('products', category=product.category_id) }}">{{ product.category_name }}</a>
+      <span class="sep">/</span>
+      <span>{{ product.product_name }}</span>
+    </div>
+  </div>
+</div>
+
+<div class="detail-grid">
+  <!-- Image -->
+  <div>
+    <div class="detail-img">
+      {% if product.image_url %}
+      <img src="{{ product.image_url }}" alt="{{ product.product_name }}">
+      {% else %}
+      <div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:8rem;">{{ product.icon }}</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Info -->
+  <div>
+    <div class="detail-cat">{{ product.icon }} {{ product.category_name }}</div>
+    <h1 class="detail-name">{{ product.product_name }}</h1>
+
+    <div class="detail-price">
+      ฿{{ '{:,.0f}'.format(product.price) }}
+      {% if product.original_price and product.original_price > product.price %}
+      <span style="font-size:1.4rem;color:var(--gray2);text-decoration:line-through;margin-left:12px">
+        ฿{{ '{:,.0f}'.format(product.original_price) }}
+      </span>
+      {% endif %}
+    </div>
+
+    {% if product.description %}
+    <p class="detail-desc">{{ product.description }}</p>
+    {% endif %}
+
+    <div class="stock-info">
+      สต็อกคงเหลือ: <span>{{ product.stock }} ชิ้น</span>
+    </div>
+
+    {% if product.stock > 0 %}
+    <form method="POST" action="{{ url_for('cart_add', pid=product.product_id) }}">
+      <div class="qty-control">
+        <button type="button" class="qty-btn" onclick="changeQty(-1)">−</button>
+        <input type="number" name="quantity" id="qtyInput" value="1" min="1" max="{{ product.stock }}" class="qty-input">
+        <button type="button" class="qty-btn" onclick="changeQty(1)">+</button>
+      </div>
+      <div style="display:flex;gap:1rem;margin-top:1rem">
+        <button type="submit" class="btn btn-primary btn-lg">🛒 เพิ่มลงตะกร้า</button>
+        <a href="{{ url_for('cart') }}" class="btn btn-outline btn-lg">ดูตะกร้า</a>
+      </div>
+    </form>
+    {% else %}
+    <div class="btn btn-outline btn-lg" style="cursor:default;opacity:0.5;display:inline-flex">สินค้าหมดแล้ว</div>
+    {% endif %}
+
+    <!-- Tags -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:2rem">
+      <span style="background:var(--dark2);border:1px solid var(--border);padding:6px 14px;border-radius:100px;font-size:0.8rem;color:var(--gray)">🚚 ส่งฟรีทั่วประเทศ</span>
+      <span style="background:var(--dark2);border:1px solid var(--border);padding:6px 14px;border-radius:100px;font-size:0.8rem;color:var(--gray)">🔒 ชำระเงินปลอดภัย</span>
+      <span style="background:var(--dark2);border:1px solid var(--border);padding:6px 14px;border-radius:100px;font-size:0.8rem;color:var(--gray)">↩️ คืนสินค้าได้ 7 วัน</span>
+    </div>
+  </div>
+</div>
+
+<!-- Related Products -->
+{% if related %}
+<section class="section section-dark">
+  <div class="section-inner">
+    <div class="section-header">
+      <div>
+        <span class="section-label">หมวดเดียวกัน</span>
+        <h2 class="section-title">สินค้าที่เกี่ยวข้อง</h2>
+      </div>
+    </div>
+    <div class="products-grid">
+      {% for p in related %}
+      <div class="product-card" onclick="location.href='{{ url_for('product_detail', pid=p.product_id) }}'">
+        <div class="product-img">
+          {% if p.image_url %}
+          <img src="{{ p.image_url }}" alt="{{ p.product_name }}" loading="lazy">
+          {% else %}
+          <div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:4rem;">{{ p.category_name }}</div>
+          {% endif %}
+        </div>
+        <div class="product-info">
+          <div class="product-name">{{ p.product_name }}</div>
+          <div class="product-price">
+            <span class="price-main">฿{{ '{:,.0f}'.format(p.price) }}</span>
+          </div>
+          <div class="product-footer">
+            <form method="POST" action="{{ url_for('cart_add', pid=p.product_id) }}" onclick="event.stopPropagation()">
+              <input type="hidden" name="quantity" value="1">
+              <button type="submit" class="btn btn-primary btn-sm">🛒 เพิ่ม</button>
+            </form>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function changeQty(delta) {
+  const inp = document.getElementById('qtyInput');
+  const max = parseInt(inp.max);
+  let v = parseInt(inp.value) + delta;
+  if (v < 1) v = 1;
+  if (v > max) v = max;
+  inp.value = v;
+}
+</script>
+{% endblock %}

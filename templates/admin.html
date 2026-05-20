@@ -1,1 +1,212 @@
+{% extends 'base.html' %}
+{% block title %}Admin Panel{% endblock %}
 
+{% block content %}
+<div class="admin-layout">
+
+  <!-- Sidebar -->
+  <aside class="admin-sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">จัดการ</div>
+      <button class="sidebar-link active" onclick="showTab('products')">📦 จัดการสินค้า</button>
+      <button class="sidebar-link" onclick="showTab('orders')">🧾 คำสั่งซื้อ</button>
+      <button class="sidebar-link" onclick="showTab('add')">➕ เพิ่มสินค้า</button>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">ลิงก์</div>
+      <a href="{{ url_for('index') }}" class="sidebar-link">🏠 หน้าแรก</a>
+      <a href="{{ url_for('products') }}" class="sidebar-link">🛍️ หน้าสินค้า</a>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="admin-main">
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-card-label">สินค้าทั้งหมด</div>
+        <div class="stat-card-val">{{ stats.total_products }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">คำสั่งซื้อ</div>
+        <div class="stat-card-val">{{ stats.total_orders }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">รายได้รวม</div>
+        <div class="stat-card-val" style="font-size:1.6rem">฿{{ '{:,.0f}'.format(stats.revenue) }}</div>
+      </div>
+      <div class="stat-card" style="border-color:rgba(255,193,7,0.3)">
+        <div class="stat-card-label">รอดำเนินการ</div>
+        <div class="stat-card-val" style="color:#ffc107">{{ stats.pending }}</div>
+      </div>
+    </div>
+
+    <!-- Products Tab -->
+    <div id="tab-products" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📦 รายการสินค้า</div>
+          <button class="btn btn-primary btn-sm" onclick="showTab('add')">+ เพิ่มสินค้า</button>
+        </div>
+        <div class="card-body" style="padding:0">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>รูป</th>
+                <th>ชื่อสินค้า</th>
+                <th>หมวดหมู่</th>
+                <th>ราคา</th>
+                <th>สต็อก</th>
+                <th>จัดการ</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in products %}
+              <tr>
+                <td>
+                  {% if p.image_url %}
+                  <img src="{{ p.image_url }}" class="table-img" alt="">
+                  {% else %}
+                  <div style="width:44px;height:44px;background:var(--dark3);border-radius:6px;display:flex;align-items:center;justify-content:center">🏅</div>
+                  {% endif %}
+                </td>
+                <td>
+                  <a href="{{ url_for('product_detail', pid=p.product_id) }}" style="font-weight:600;color:var(--white)">{{ p.product_name }}</a>
+                </td>
+                <td style="color:var(--gray)">{{ p.category_name }}</td>
+                <td>
+                  <span style="color:var(--green);font-weight:700;font-family:'Barlow Condensed',sans-serif;font-size:1.1rem">฿{{ '{:,.0f}'.format(p.price) }}</span>
+                </td>
+                <td>
+                  <span class="{% if p.stock == 0 %}status status-cancelled{% elif p.stock < 5 %}status status-pending{% else %}status status-paid{% endif %}">
+                    {{ p.stock }}
+                  </span>
+                </td>
+                <td style="display:flex;gap:6px;align-items:center">
+                  <a href="{{ url_for('admin_edit_product', pid=p.product_id) }}"
+                     class="btn btn-outline btn-sm">✏️ แก้ไข</a>
+                  <a href="{{ url_for('admin_delete_product', pid=p.product_id) }}"
+                     class="btn btn-danger btn-sm"
+                     onclick="return confirm('ลบ {{ p.product_name }}?')">✕ ลบ</a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Orders Tab -->
+    <div id="tab-orders" class="tab-content" style="display:none">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🧾 คำสั่งซื้อทั้งหมด</div>
+        </div>
+        <div class="card-body" style="padding:0">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>ลูกค้า</th>
+                <th>วันที่</th>
+                <th>ยอดรวม</th>
+                <th>สถานะ</th>
+                <th>เปลี่ยนสถานะ</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for o in orders %}
+              <tr>
+                <td style="color:var(--gray)">{{ o.order_id }}</td>
+                <td>{{ o.user_name or 'ลูกค้า' }}</td>
+                <td style="color:var(--gray)">{{ o.order_date }}</td>
+                <td><span style="color:var(--green);font-weight:700;font-family:'Barlow Condensed',sans-serif">฿{{ '{:,.0f}'.format(o.total_price) }}</span></td>
+                <td><span class="status status-{{ o.status }}">{{ o.status }}</span></td>
+                <td>
+                  <form method="POST" action="{{ url_for('admin_update_order', oid=o.order_id) }}" style="display:flex;gap:6px;align-items:center">
+                    <select name="status" class="filter-select" style="padding:6px 10px;font-size:0.82rem">
+                      {% for s in ['pending','paid','shipping','cancelled'] %}
+                      <option value="{{ s }}" {% if o.status==s %}selected{% endif %}>{{ s }}</option>
+                      {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-outline btn-sm">บันทึก</button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Product Tab -->
+    <div id="tab-add" class="tab-content" style="display:none">
+      <div class="card" style="max-width:640px">
+        <div class="card-header">
+          <div class="card-title">➕ เพิ่มสินค้าใหม่</div>
+        </div>
+        <div class="card-body">
+          <form method="POST" action="{{ url_for('admin_add_product') }}">
+            <div class="form-group">
+              <label class="form-label">ชื่อสินค้า *</label>
+              <input type="text" name="name" class="form-control" placeholder="ชื่อสินค้า" required>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">ราคา (บาท) *</label>
+                <input type="number" name="price" class="form-control" placeholder="0.00" step="0.01" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">ราคาเต็ม (ถ้ามี)</label>
+                <input type="number" name="original_price" class="form-control" placeholder="0.00" step="0.01">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">จำนวนสต็อก *</label>
+                <input type="number" name="stock" class="form-control" placeholder="0" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">หมวดหมู่ *</label>
+                <select name="category_id" class="form-control" required>
+                  {% for cat in categories %}
+                  <option value="{{ cat.category_id }}">{{ cat.icon }} {{ cat.category_name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">รายละเอียด</label>
+              <textarea name="description" class="form-control" placeholder="รายละเอียดสินค้า..."></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">URL รูปภาพ</label>
+              <input type="url" name="image_url" class="form-control" placeholder="https://...">
+            </div>
+            <div class="form-group" style="display:flex;align-items:center;gap:10px">
+              <input type="checkbox" name="featured" id="featured" style="accent-color:var(--green);width:18px;height:18px">
+              <label for="featured" class="form-label" style="margin:0;cursor:pointer">⭐ สินค้าแนะนำ</label>
+            </div>
+            <button type="submit" class="btn btn-primary">➕ เพิ่มสินค้า</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showTab(name) {
+  document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+  document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+  document.getElementById('tab-' + name).style.display = 'block';
+  event.currentTarget && event.currentTarget.classList.add('active');
+}
+</script>
+{% endblock %}

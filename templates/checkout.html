@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% block title %}ชำระเงิน{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div class="page-header-inner">
+    <div class="breadcrumb">
+      <a href="{{ url_for('index') }}">หน้าแรก</a>
+      <span class="sep">/</span>
+      <a href="{{ url_for('cart') }}">ตะกร้าสินค้า</a>
+      <span class="sep">/</span>
+      <span>ชำระเงิน</span>
+    </div>
+    <h1 class="page-title">💳 ชำระเงิน</h1>
+  </div>
+</div>
+
+<section class="section">
+  <div class="section-inner">
+    {% if cart_items %}
+    <div class="checkout-layout">
+
+      <!-- Form -->
+      <div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📦 ข้อมูลการจัดส่ง</div>
+          </div>
+          <div class="card-body">
+            <form method="POST" action="{{ url_for('checkout') }}">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">ชื่อ-นามสกุล *</label>
+                  <input type="text" name="name" class="form-control" placeholder="กรอกชื่อ-นามสกุล" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">เบอร์โทรศัพท์ *</label>
+                  <input type="tel" name="phone" class="form-control" placeholder="0812345678" required>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">อีเมล</label>
+                <input type="email" name="email" class="form-control" placeholder="email@example.com">
+              </div>
+              <div class="form-group">
+                <label class="form-label">ที่อยู่จัดส่ง *</label>
+                <textarea name="address" class="form-control" rows="3" placeholder="บ้านเลขที่ ถนน แขวง เขต จังหวัด รหัสไปรษณีย์" required></textarea>
+              </div>
+
+              <div class="card" style="background:var(--dark);margin-top:1.5rem">
+                <div class="card-header">
+                  <div class="card-title">💳 วิธีชำระเงิน</div>
+                </div>
+                <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+                  {% for label, val, icon in [('โอนเงินผ่านธนาคาร','bank','🏦'),('พร้อมเพย์','promptpay','📱'),('เก็บเงินปลายทาง','cod','🚚')] %}
+                  <label style="display:flex;align-items:center;gap:12px;background:var(--dark2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;cursor:pointer">
+                    <input type="radio" name="payment" value="{{ val }}" {% if loop.first %}checked{% endif %} style="accent-color:var(--green)">
+                    <span style="font-size:1.2rem">{{ icon }}</span>
+                    <span style="font-weight:600">{{ label }}</span>
+                  </label>
+                  {% endfor %}
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-primary btn-lg w-full mt-3" style="justify-content:center">
+                ✅ ยืนยันคำสั่งซื้อ ฿{{ '{:,.0f}'.format(total) }}
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Order Summary -->
+      <div>
+        <div class="cart-summary" style="position:sticky;top:80px">
+          <div class="summary-title">สรุปคำสั่งซื้อ</div>
+          {% for item in cart_items %}
+          <div style="display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+            {% if item.image_url %}
+            <img src="{{ item.image_url }}" style="width:44px;height:44px;border-radius:6px;object-fit:cover" alt="">
+            {% endif %}
+            <div style="flex:1">
+              <div style="font-size:0.88rem;font-weight:600">{{ item.product_name }}</div>
+              <div style="font-size:0.8rem;color:var(--gray)">x{{ item.quantity }}</div>
+            </div>
+            <div style="font-weight:700;font-size:0.95rem;color:var(--green)">฿{{ '{:,.0f}'.format(item.price * item.quantity) }}</div>
+          </div>
+          {% endfor %}
+          <div class="summary-row mt-2">
+            <span>ค่าจัดส่ง</span>
+            <span class="text-green">ฟรี 🎉</span>
+          </div>
+          <div class="summary-total">
+            <span>ยอดรวม</span>
+            <span class="total-price">฿{{ '{:,.0f}'.format(total) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="icon">🛒</div>
+      <h3>ไม่มีสินค้าในตะกร้า</h3>
+      <a href="{{ url_for('products') }}" class="btn btn-primary">เลือกซื้อสินค้า</a>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+{% endblock %}
